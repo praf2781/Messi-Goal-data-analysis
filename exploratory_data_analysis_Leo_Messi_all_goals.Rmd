@@ -1,0 +1,164 @@
+---
+title: "Messi_all_goals"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width=12, fig.height=8) 
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+```{r}
+# load packages
+
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(tidyverse)
+library(ztable)
+library(magrittr)
+options(ztable.type="html")
+```
+
+```{r}
+#set path for workign directory
+path = "C:\\Users\\payal\\Documents\\messi_all_club_goals"
+
+setwd(path)
+
+#load dataset
+messi = read.csv("data.csv")
+
+# check structure of dataset
+str(messi)
+
+#descriptive statistics
+
+describe(messi)
+
+```
+
+```{r}
+glimpse(messi)
+```
+
+```{r}
+
+
+# summarise frequency of goals by messi by seasona dn the competition played
+goals_byseason <- messi %>%
+  group_by(Season,Competition) %>% # group by seasons and competition
+  count(name = "Goals")   # count occurences and rename the column as goals
+  
+ #plot goal distribution by seasons
+
+ggplot(goals_byseason,aes(x = Season, y = Goals, fill = reorder(Competition, Goals)))+ geom_bar(stat="identity", position="stack")+geom_text(aes(label = Goals),color = "black", size = 3, position = position_stack(vjust = 0.9))+scale_fill_brewer(type= "qual", palette = "Set3")+ labs(
+         fill = "Competition"
+         )+ theme_classic()+labs(title="Goal Distribution by Season",
+        x ="Season", y = "Goals")+ theme(axis.text.x = element_text(face="bold", color="black", 
+                           size=12,angle = 25),
+          axis.text.y = element_text(face="bold", color="black", 
+                           size=14))+ theme(
+plot.title = element_text(color="Black", size=25, face="bold.italic",hjust = 0.5),
+axis.title.x = element_text(color="blue", size=20, face="bold"),
+axis.title.y = element_text(color="blue", size=20, face="bold")
+)
+
+```
+
+```{r}
+# Plot Goal distribution by League
+goals_byLeague <- messi %>%
+  group_by(Competition) %>% # group by seasons and competition
+  count(name = "Goals") # count occurrences and rename the column as goals
+  
+  
+         
+#plot goal distribution by LEague
+
+ggplot(goals_byLeague,aes(x = reorder(Competition,-Goals), y = Goals, fill = Competition))+ 
+  geom_bar(stat="identity", position="stack")+
+  geom_text(aes(label = Goals),color = "black", size = 5, vjust = 0)+
+  scale_fill_brewer(type= "qual", palette = "Set3")+ labs(fill = "Competition")+
+  theme_classic()+
+  labs(title="Goal Distribution by League",x ="Season", y = "Goals")+
+  theme(axis.text.x = element_text(face="bold", color="black", size=12,angle = 50,hjust = 1),
+          axis.text.y = element_text(face="bold", color="black", 
+                           size=14))+ 
+  theme(plot.title = element_text(color="Black", size=25, face="bold.italic",hjust = 0.5),
+  axis.title.x = element_text(color="blue", size=20, face="bold"),
+  axis.title.y = element_text(color="blue", size=20, face="bold")
+)
+
+```
+
+```{r}
+# Plot Goal distribution by Season 
+goals_byVenue <- messi %>%
+  group_by(Season,Venue) %>% # group by seasons and competition
+  count(name = "Goals") # count occurrences and rename the column as goals
+  
+  
+         
+#plot goal distribution by LEague
+
+ggplot(goals_byVenue,aes(x = Season, y = Goals, fill = reorder(Venue, -Goals)))+ geom_bar(stat="identity", position="stack")+geom_text(aes(label = Goals),color = "black", size = 3, position = position_stack(vjust = 0.9))+scale_fill_brewer(type= "qual", palette = "Set3")+ labs(
+         fill = "Competition"
+         )+ theme_classic()+labs(title="Goal Distribution by Venue",
+        x ="Season", y = "Goals")+ theme(axis.text.x = element_text(face="bold", color="black", 
+                           size=12,angle = 25),
+          axis.text.y = element_text(face="bold", color="black", 
+                           size=14))+ theme(
+plot.title = element_text(color="Black", size=25, face="bold.italic",hjust = 0.5),
+axis.title.x = element_text(color="blue", size=20, face="bold"),
+axis.title.y = element_text(color="blue", size=20, face="bold")
+)
+```
+
+```{r results='asis'}
+# Opponent rankign
+
+goals_byopponent <- messi %>%
+  group_by(Opponent,Competition) %>%
+  count(name = "Goals") %>%
+  ungroup()
+  #filter(between(Goals,10,20))
+  
+glimpse(goals_byopponent)
+
+library(pivottabler)
+goals_byopponent <- goals_byopponent %>%
+    pivot_wider(names_from = Competition, values_from = Goals) %>%
+    replace(is.na(.), 0) %>%
+    rename(Ligue1 = "Ligue 1", ChampionsLeague = "Champions League") %>%
+    rowwise() %>% 
+    mutate(Total = sum(c_across(Ligue1: ChampionsLeague))) %>%
+    filter(between(Total,10,40)) 
+    
+
+#make heatmap
+#ztable(goals_byopponent) %>% makeHeatmap(rows= c(1,2,3),margin =2) %>% print(caption="Top ranked Goals by Opponent")
+```
+
